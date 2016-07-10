@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with TexturePacker http://www.codeandweb.com/texturepacker-->
+<!-- $TexturePacker:SmartUpdate:d57407fa9b46ae34b1f1b518ab22872f:21dfc98d92fb370d0562528e5b81e747:e8a3c3fd9b70ebc8ea889b0aefff6329$ -->
+<TextureAtlas imagePath="tetris_main_001.png">
+    <SubTexture name="bg_main" x="2" y="2" width="760" height="600"/>
+    <SubTexture name="game_object_tile_green_dark" x="2" y="1451" width="24" height="24"/>
+    <SubTexture name="game_object_tile_green_light" x="2" y="1425" width="24" height="24"/>
+    <SubTexture name="game_object_tile_magenta" x="2" y="1399" width="24" height="24"/>
+    <SubTexture name="game_object_tile_orange" x="2" y="1373" width="24" height="24"/>
+    <SubTexture name="game_object_tile_red" x="2" y="1347" width="24" height="24"/>
+    <SubTexture name="game_object_tile_stencil" x="2" y="1321" width="24" height="24"/>
+    <SubTexture name="game_object_tile_violet" x="2" y="1295" width="24" height="24"/>
+    <SubTexture name="game_object_tile_yellow" x="2" y="1269" width="24" height="24"/>
+    <SubTexture name="ui_icon_tile_next" x="2" y="1222" width="39" height="45" frameX="-3" frameY="0" frameWidth="45" frameHeight="45"/>
+    <SubTexture name="ui_panel_main" x="2" y="604" width="286" height="540" frameX="-1" frameY="0" frameWidth="290" frameHeight="540"/>
+    <SubTexture name="ui_panel_short" x="2" y="1146" width="184" height="74" frameX="-3" frameY="-2" frameWidth="190" frameHeight="80"/>
+</TextureAtlas>
