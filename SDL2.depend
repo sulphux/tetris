@@ -330,3 +330,9 @@
 	"begin_code.h"
 	"close_code.h"
 
+1468203429 source:c:\users\sulphux\documents\_codeblocks\tetris\main.cpp
+	<SDL.h>
+	<SDL_image.h>
+	<stdio.h>
+	<string>
+
