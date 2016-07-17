@@ -1,7 +1,5 @@
-#pragma once
-#include <Polycode.h>
-
-using namespace Polycode;
+#include <stdlib.h>
+#include <time.h>
 
 class CRandomizer
 {
@@ -15,7 +13,7 @@ public:
 	static int getNewRand();
 
 private:
-	CRandomizer(){ newRandom(); last = 0; };
+	CRandomizer(){ srand(time(NULL)); newRandom(); last = 0; };
 	CRandomizer(const CRandomizer &);
 	CRandomizer& operator=(const CRandomizer&);
 

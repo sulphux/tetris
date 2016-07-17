@@ -1,5 +1,7 @@
 #include "CRandomizer.h"
 #include "math.h"
+#include <stdlib.h>
+
 
 int CRandomizer::pieces[28];
 int CRandomizer::last;
@@ -15,7 +17,7 @@ void CRandomizer::newRandom()
 {
 	for (int i = 0; i < 7; i++)
 	{
-		pieces[i] = pieces[i + 7] = pieces[i + 14] = pieces[i + 21] = i;
+		pieces[i] = pieces[i + 7] = pieces[i + 14] = pieces[i + 21] = i + 1;
 	}
 	for (int i = 0; i < 50; i++)
 	{

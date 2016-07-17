@@ -336,3 +336,19 @@
 	<stdio.h>
 	<string>
 
+1468734078 source:c:\users\bcichy\documents\kodzenie\tetris\tetris\main.cpp
+	<SDL.h>
+	<SDL_image.h>
+	<stdio.h>
+	<string>
+	"old_sources/CRandomizer.h"
+
+1468727981 c:\users\bcichy\documents\kodzenie\tetris\tetris\old_sources\crandomizer.h
+	<stdlib.h>
+	<time.h>
+
+1468727939 source:c:\users\bcichy\documents\kodzenie\tetris\tetris\old_sources\crandomizer.cpp
+	"CRandomizer.h"
+	"math.h"
+	<stdlib.h>
+

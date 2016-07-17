@@ -6,52 +6,276 @@ and may not be redistributed without written permission.*/
 #include <SDL_image.h>
 #include <stdio.h>
 #include <string>
+#include "old_sources/CRandomizer.h"
 
 #define TILE_SIZE 26   // with space 2 px
 #define TILE_SIZE_W 24 // without space
 #define X_SHIFT 251  // coord x of beginning map
 #define Y_SHIFT 31 // as above but y
 
+#define CAN_DOWN currBrickY>=19
+#define CAN_LEFT currBrickX<=0
+#define CAN_RIGHT currBrickX>=9
+
 ///-------------------------------
 
+// init "randomizer" and pick first number of piece
+CRandomizer* randomizer = &(CRandomizer::getInstance());
+
+bool lShiftingFlag = false;
+bool rShiftingFlag = false;
+bool dShiftingFlag = false;
+Uint32 shiftingSpeed = 100;
+
+short currBrickX;
+short currBrickY;
+short currSide = 0;
+
 short mainBoard[10][20];
-short brickCoords[7][6] =
+short brickCoords[8][6] =
 {//   x1  y1  x2  y2  x3  y3   // brick type:
-	{ -1,  0,  0, -1,  1,  0 },// T
-	{  0, -1,  1, -1,  1,  0 },// O
-	{ -1,  0,  1,  0,  2,  0 },// I
-	{ -1,  0, -1, -1,  1,  0 },// J
-	{ -1,  0,  1,  0,  1, -1 },// L
-	{ -1,  0,  0, -1,  1, -1 },// S
-	{ -1, -1,  0, -1,  1,  0 } // Z
+    {  0,  0,  0,  0,  0,  0 },//0// nothing
+	{ -1,  0,  0, -1,  1,  0 },//1// T
+	{  0, -1,  1, -1,  1,  0 },//2// O
+	{ -1,  0,  1,  0,  2,  0 },//3// I
+	{ -1,  0, -1, -1,  1,  0 },//4// J
+	{ -1,  0,  1,  0,  1, -1 },//5// L
+	{ -1,  0,  0, -1,  1, -1 },//6// S
+	{ -1, -1,  0, -1,  1,  0 } //7// Z
 };
 
-short currentBrickType;
+short currentNextBrickType = randomizer->getNewRand();
+short currentBrickType = randomizer->getNewRand();
+
+void pickUpBrick();
+void putDownBrick();
+void putDownBrick(short, short);
+void rotateBrickSchemeLeft();
+void rotateBrickSchemeRight();
+
 
 void resetBoard()
 {
 	for (int y = 0; y < 20; y++)
 		for (int x = 0; x < 10; x++)
-			mainBoard[x][y] = 0;
+            mainBoard[x][y] = 0;
+}
 
-    mainBoard[2][4] = 2;
+void resetSideState()
+{
+	if (currSide != 0)
+	{
+		currSide %= 4;
+
+		while (currSide > 0)
+			rotateBrickSchemeLeft();
+
+		while (currSide < 0)
+			rotateBrickSchemeRight();
+	}
 }
 
 void tryPutNewBrick()
 {
+    currentBrickType = currentNextBrickType;
+    currentNextBrickType = randomizer->getNewRand();
+
+    currBrickX = 4;
+	currBrickY = 1;
 	int brickNumber = static_cast<int>(currentBrickType);
+
 	for (int i = 0; i < 3; i++)
 	{
 		int tmpX = 4 + brickCoords[brickNumber][2 * i];
 		int tmpY = 1 + brickCoords[brickNumber][2 * i + 1];
+        if (mainBoard[tmpX][tmpY] != 0)
+			return;
 	}
-	currBrickX = 4;
-	currBrickY = 1;
+
+	if (mainBoard[4][1] != 0)
+			return;
+    putDownBrick();
 }
 
+bool tryShift(short xInterval, short yInterval )
+{
+    int tmpX, tmpY;
+
+    int brickNumber = static_cast<int>(currentBrickType);
+
+    pickUpBrick();
+
+	for (int i = 0; i < 3; i++)
+	{
+		tmpX = currBrickX + brickCoords[brickNumber][2 * i];
+		tmpY = currBrickY + brickCoords[brickNumber][2 * i + 1];
+
+		if (!((tmpX + xInterval)<=9) || !((tmpX + xInterval)>=0) || !((tmpY + yInterval)<=19) || mainBoard[tmpX + xInterval][tmpY + yInterval] != 0)
+		{
+		    putDownBrick();
+		    return false;
+		}
+	}
+    if( !((tmpX + xInterval)<=9) || !((tmpX + xInterval)>=0) || !((tmpY + yInterval)<=19) || mainBoard[currBrickX][currBrickY + 1] != 0)
+    {
+        putDownBrick();
+        return false;
+    }
+
+    putDownBrick(xInterval, yInterval);
+    currBrickX += xInterval;
+	currBrickY += yInterval;
+	return true;
+}
+
+void tryShiftInfinitlyDown()
+{
+    while(tryShift(0,1));
+}
+
+bool tryRotateRightBrick()
+{
+	if (currentBrickType == 2) return false;
+	pickUpBrick();
+	rotateBrickSchemeRight();
+	for (int i = 0; i < 3; i++)
+	{
+		int tmpX = currBrickX + brickCoords[currentBrickType][2 * i];
+		int tmpY = currBrickY + brickCoords[currentBrickType][2 * i + 1];
+		if (tmpX<0 || tmpX>9 || tmpY<0 || tmpY>19 || mainBoard[tmpX][tmpY] != 0)
+		{
+			rotateBrickSchemeLeft();
+			putDownBrick();
+			return false;
+		}
+	}
+	putDownBrick();
+	return true;
+}
+
+bool tryRotateLeftBrick()
+{
+	if (currentBrickType == 2) return false;
+	pickUpBrick();
+	rotateBrickSchemeLeft();
+	for (int i = 0; i < 3; i++)
+	{
+		int tmpX = currBrickX + brickCoords[currentBrickType][2 * i];
+		int tmpY = currBrickY + brickCoords[currentBrickType][2 * i + 1];
+		if (tmpX<0 || tmpX>9 || tmpY<0 || tmpY>19 || mainBoard[tmpX][tmpY] != 0)
+		{
+			rotateBrickSchemeRight();
+			putDownBrick();
+			return false;
+		}
+	}
+	putDownBrick();
+	return true;
+}
+
+void pickUpBrick()
+{
+    mainBoard[currBrickX][currBrickY] = 0;
+	for (int i = 0; i < 3; i++)
+        mainBoard[currBrickX + brickCoords[currentBrickType][2 * i]][currBrickY + brickCoords[currentBrickType][2 * i + 1]] = 0;
+}
+
+void putDownBrick()
+{
+    putDownBrick(0,0);
+}
+
+void putDownBrick(short xInterval, short yInterval)
+{
+    mainBoard[currBrickX + xInterval][currBrickY + yInterval] = currentBrickType;
+    for (int i = 0; i < 3; i++)
+        mainBoard[currBrickX + brickCoords[currentBrickType][2 * i] + xInterval][currBrickY + brickCoords[currentBrickType][2 * i + 1] + yInterval] = currentBrickType;
+
+}
+
+void rotateBrickSchemeRight()
+{
+	for (short i = 0; i < 3; i++)
+	{
+		short newX = brickCoords[currentBrickType][2 * i + 1] * (-1);
+		short newY = brickCoords[currentBrickType][2 * i];
+		brickCoords[currentBrickType][2 * i] = newX;
+		brickCoords[currentBrickType][2 * i + 1] = newY;
+	}
+	currSide++;
+}
+
+void rotateBrickSchemeLeft()
+{
+	for (int i = 0; i < 3; i++)
+	{
+		short newX = brickCoords[currentBrickType][2 * i + 1];
+		short newY = brickCoords[currentBrickType][2 * i] * (-1);
+		brickCoords[currentBrickType][2 * i] = newX;
+		brickCoords[currentBrickType][2 * i + 1] = newY;
+	}
+	currSide--;
+}
+
+void shiftBoardDown(short indexY)
+{
+	for (int y = indexY; y > 0; y--)
+	{
+		for (int x = 0; x < 10; x++)
+		{
+			mainBoard[x][y] = mainBoard[x][y-1];
+		}
+	}
+}
+
+void checkLines()
+{
+	int y = 19;
+	while(y >= 0)
+	{
+		int x = 0;
+		while (x<10 && mainBoard[x][y] != 0)
+		{
+			x++;
+		}
+		if (x>9)
+		{
+			shiftBoardDown(y);
+		}
+		else
+		{
+			y--;
+		}
+	}
+}
+
+Uint32 callback( Uint32 interval, void* param )
+{
+    if (!tryShift(0, 1))
+    {
+        resetSideState();
+        checkLines();
+        tryPutNewBrick();
+        shiftingSpeed = 100;
+    }
+
+    return interval;
+}
+
+Uint32 callback2( Uint32 interval, void* param )
+{
+    if (rShiftingFlag)
+        tryShift(1,0);
+    if (lShiftingFlag)
+        tryShift(-1,0);
+    if (dShiftingFlag)
+        tryShift(0,1);
+    if ((rShiftingFlag||lShiftingFlag||dShiftingFlag)&&(shiftingSpeed>15))
+        shiftingSpeed-= 15;
 
 
-
+    return shiftingSpeed;
+}
 
 
 //Screen dimension constants
@@ -211,7 +435,7 @@ bool init()
     bool success = true;
 
     //Initialize SDL
-    if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
+    if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_TIMER  ) < 0 )
     {
         printf( "SDL could not initialize! SDL Error: %s\n", SDL_GetError() );
         success = false;
@@ -225,7 +449,7 @@ bool init()
         }
 
         //Create window
-        gWindow = SDL_CreateWindow( "SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
+        gWindow = SDL_CreateWindow( "Tetris", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
         if( gWindow == NULL )
         {
             printf( "Window could not be created! SDL Error: %s\n", SDL_GetError() );
@@ -386,6 +610,13 @@ int main( int argc, char* args[] )
             //Event handler
             SDL_Event e;
 
+
+            void * nothing;
+            SDL_TimerID timerShifting = SDL_AddTimer( 1000, callback, nothing);
+            SDL_TimerID timerShiftingVertical = SDL_AddTimer( 60, callback2, nothing);
+
+            tryPutNewBrick();
+
             //While application is running
             while( !quit )
             {
@@ -396,6 +627,50 @@ int main( int argc, char* args[] )
                     if( e.type == SDL_QUIT )
                     {
                         quit = true;
+                    }
+                    //User requests key
+                    else if( e.type == SDL_KEYDOWN)
+                    {
+                        switch( e.key.keysym.sym )
+                        {
+                        case SDLK_LEFT:
+                            lShiftingFlag = true;
+                            break;
+                        case SDLK_RIGHT:
+                            rShiftingFlag = true;
+                            break;
+                        case SDLK_DOWN:
+                            dShiftingFlag = true;
+                            break;
+                        case SDLK_LSHIFT:
+                            tryRotateRightBrick();
+                            printf("%i", currSide);
+                            break;
+                        case SDLK_LALT:
+                            tryRotateLeftBrick();
+                            printf("%i", currSide);
+                            break;
+                        case SDLK_SPACE:
+                            tryShiftInfinitlyDown();
+                            break;
+                        }
+                    }
+                    else if( e.type == SDL_KEYUP)
+                    {
+                        switch( e.key.keysym.sym )
+                        {
+                        case SDLK_LEFT:
+                            lShiftingFlag = false;
+                            shiftingSpeed = 100;
+                            break;
+                        case SDLK_RIGHT:
+                            rShiftingFlag = false;
+                            shiftingSpeed = 100;
+                            break;
+                        case SDLK_DOWN:
+                            dShiftingFlag = false;
+                            shiftingSpeed = 100;
+                        }
                     }
                 }
 
@@ -424,12 +699,19 @@ int main( int argc, char* args[] )
                     }
                 }
 
+                gSpriteSheetTexture.render( 140, 140, &gSpriteClips[currentNextBrickType + 4]);
+                for( int i = 0; i < 3; i++ )
+                {
+                    gSpriteSheetTexture.render( 140 + brickCoords[currentNextBrickType][2 * i] * TILE_SIZE, 140 + brickCoords[currentNextBrickType][2 * i + 1] * TILE_SIZE, &gSpriteClips[currentNextBrickType + 4]);
+                }
+
                 //Update screen
                 SDL_RenderPresent( gRenderer );
             }
+        SDL_RemoveTimer( timerShifting );
+
         }
     }
-
     //Free resources and close SDL
     close();
 

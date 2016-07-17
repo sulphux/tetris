@@ -37,6 +37,8 @@
 			<Add directory="C:/SDL2/i686-w64-mingw32/lib" />
 		</Linker>
 		<Unit filename="main.cpp" />
+		<Unit filename="old_sources/CRandomizer.cpp" />
+		<Unit filename="old_sources/CRandomizer.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />
